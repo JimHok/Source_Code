@@ -249,8 +249,7 @@ plot_size = 20
 
 st.title('Iris Recognition Demo')
 
-param = pd.read_csv(
-    'C:/Users/jimyj/Desktop/TAIST/Thesis/Source_Code/param.csv')
+param = pd.read_csv('param.csv')
 tb_alpha = param['alpha']
 tb_beta = param['beta']
 tb_gamma = param['gamma']
@@ -333,10 +332,10 @@ with st.spinner('Loading Image...'):
     img_2_item = int(op_2_item.split(' ')[2])
 
     img_1 = read_image(
-        f'C:/Users/jimyj/Desktop/TAIST/Thesis/Source_Code/CASIA-IrisV2/device1/00{str(img_1_fol).zfill(2)}/00{str(img_1_fol).zfill(2)}_0{str(img_1_item).zfill(2)}.bmp')
+        f'CASIA-IrisV2/device1/00{str(img_1_fol).zfill(2)}/00{str(img_1_fol).zfill(2)}_0{str(img_1_item).zfill(2)}.bmp')
 
     img_2 = read_image(
-        f'C:/Users/jimyj/Desktop/TAIST/Thesis/Source_Code/CASIA-IrisV2/device1/00{str(img_2_fol).zfill(2)}/00{str(img_2_fol).zfill(2)}_0{str(img_2_item).zfill(2)}.bmp')
+        f'CASIA-IrisV2/device1/00{str(img_2_fol).zfill(2)}/00{str(img_2_fol).zfill(2)}_0{str(img_2_item).zfill(2)}.bmp')
 
     matplotlib.rcParams.update({'font.size': 22})
     fig = plt.figure(figsize=(20, plot_size), constrained_layout=False)
