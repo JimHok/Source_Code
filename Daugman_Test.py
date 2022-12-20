@@ -238,7 +238,7 @@ def HammingDistance(template1, mask1, template2, mask2):
             hd = np.nan
         else:
             hd1 = bitsdiff / totalbits
-            if hd1 > hd or np.isnan(hd):
+            if hd1 < hd or np.isnan(hd):
                 hd = hd1
 
     return hd
@@ -406,8 +406,9 @@ with st.spinner('Loading Image...'):
             if len(templates) >= 2:
                 hd_raw = HammingDistance(
                     templates[0], masks[0], templates[i], masks[i])
+                result = 'Match' if hd_raw <= 0.48 else 'Not Match'
                 ax0.set_title(
-                    f'Hamming Dist: {round(hd_raw, 4)}', fontsize=40)
+                    f'Ham Dist: {round(hd_raw, 3)} ➜ {result}', fontsize=40)
 
     # st.write(f"Hammimg Distance: {round(hd_raw, 4)}")
 
