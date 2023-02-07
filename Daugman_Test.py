@@ -254,24 +254,24 @@ tb_alpha = param['alpha']
 tb_beta = param['beta']
 tb_gamma = param['gamma']
 
-op_1_fol = st.sidebar.selectbox(
+op_1_fol = st.selectbox(
     "Select Reference Iris Image Folder",
-    (f'Iris Folder {i}' for i in range(60)),
+    (f'Iris Folder {i}' for i in range(1000)),
 )
 
-op_1_item = st.sidebar.selectbox(
+op_1_item = st.selectbox(
     "Select Reference Iris Image file",
-    (f'Iris Image {i}' for i in range(20)),
+    (f'Iris Image {i}' for i in range(10)),
 )
 
-op_2_fol = st.sidebar.selectbox(
+op_2_fol = st.selectbox(
     "Select Match Iris Image Folder",
-    (f'Iris Folder {i}' for i in range(60)),
+    (f'Iris Folder {i}' for i in range(1000)),
 )
 
-op_2_item = st.sidebar.selectbox(
+op_2_item = st.selectbox(
     "Select Match Iris Image file",
-    (f'Iris Image {i}' for i in range(20)),
+    (f'Iris Image {i}' for i in range(10)),
 )
 
 normalize_func = st.sidebar.container()
@@ -331,84 +331,102 @@ with st.spinner('Loading Image...'):
     img_2_fol = int(op_2_fol.split(' ')[2])
     img_2_item = int(op_2_item.split(' ')[2])
 
-    img_1 = read_image(
-        f'CASIA-IrisV2/device1/00{str(img_1_fol).zfill(2)}/00{str(img_1_fol).zfill(2)}_0{str(img_1_item).zfill(2)}.bmp')
+    img_1_L = read_image(
+        f'CASIA-Iris-Thousand/{str(img_1_fol).zfill(3)}/L/S5{str(img_1_fol).zfill(3)}L{str(img_1_item).zfill(2)}.jpg')
 
-    img_2 = read_image(
-        f'CASIA-IrisV2/device1/00{str(img_2_fol).zfill(2)}/00{str(img_2_fol).zfill(2)}_0{str(img_2_item).zfill(2)}.bmp')
+    img_1_R = read_image(
+        f'CASIA-Iris-Thousand/{str(img_1_fol).zfill(3)}/R/S5{str(img_1_fol).zfill(3)}R{str(img_1_item).zfill(2)}.jpg')
+
+    img_2_L = read_image(
+        f'CASIA-Iris-Thousand/{str(img_2_fol).zfill(3)}/L/S5{str(img_2_fol).zfill(3)}L{str(img_2_item).zfill(2)}.jpg')
+
+    img_2_R = read_image(
+        f'CASIA-Iris-Thousand/{str(img_2_fol).zfill(3)}/R/S5{str(img_2_fol).zfill(3)}R{str(img_2_item).zfill(2)}.jpg')
 
     matplotlib.rcParams.update({'font.size': 22})
-    fig = plt.figure(figsize=(20, plot_size), constrained_layout=False)
-    outer_grid = fig.add_gridspec(5, 2, wspace=0.1, hspace=-0.5)
+    fig = plt.figure(figsize=(20, plot_size*2), constrained_layout=False)
+    outer_grid = fig.add_gridspec(12, 2, wspace=0.1, hspace=0.7)
 
-    imgs = [img_1, img_2]
-    templates = []
-    masks = []
+    imgs = [[img_1_L, img_1_R], [img_2_L, img_2_R]]
+    templates = [[], []]
+    masks = [[], []]
+    results = []
 
-    for i in range(2):
-        img = imgs[i]
+    for i in range(len(imgs)):
+        for j in range(len(imgs[i])):
+            img = imgs[i][j]
 
-        _, snake, circles = localization(
-            img, N=400, alpha=alpha, beta=beta, gamma=gamma)
+            _, snake, circles = localization(
+                img, N=400, alpha=alpha, beta=beta, gamma=gamma)
 
-        pupil_circle = circles
-        iris_circle = np.flip(np.array(snake).astype(int), 1)
+            pupil_circle = circles
+            iris_circle = np.flip(np.array(snake).astype(int), 1)
 
-        ax0 = fig.add_subplot(outer_grid[:3, i])
-        ax1 = fig.add_subplot(outer_grid[3, i])
-        ax2 = fig.add_subplot(outer_grid[4, i])
+            plot_c = 5*i
+            ax0 = fig.add_subplot(outer_grid[0+plot_c:3+plot_c, j])
+            ax1 = fig.add_subplot(outer_grid[3+plot_c, j])
+            ax2 = fig.add_subplot(outer_grid[4+plot_c, j])
 
-        ax0.imshow(img, cmap='gray')
-        ax0.plot(snake[:, 1], snake[:, 0], '-b', lw=2)
-        ax0.set_title(f'Reference Image', fontsize=40)
+            ax0.imshow(img, cmap='gray')
+            ax0.plot(snake[:, 1], snake[:, 0], '-b', lw=2)
+            ax0.set_title(f'Reference Image', fontsize=40)
 
-        if circles[0] is None:
-            err_msg = f'<p style="color:Red; font-size: 20px;">No circles found in image</p>'
-            st.markdown(err_msg, unsafe_allow_html=True)
-            ax1.imshow(img, cmap='gray')
-            ax1.axis([0, 400, 64, 0])
-        else:
-            circle = plt.Circle((circles[0], circles[1]),
-                                circles[2], color='g', fill=False, linewidth=2)
-            ax0.add_patch(circle)
-            ax0.scatter(circles[0], circles[1], s=20, c='g', marker='o')
+            if circles[0] is None:
+                err_msg = f'<p style="color:Red; font-size: 20px;">No circles found in image</p>'
+                st.markdown(err_msg, unsafe_allow_html=True)
+                ax1.imshow(img, cmap='gray')
+                ax1.axis([0, 400, 64, 0])
+            else:
+                circle = plt.Circle((circles[0], circles[1]),
+                                    circles[2], color='g', fill=False, linewidth=2)
+                ax0.add_patch(circle)
+                ax0.scatter(circles[0], circles[1], s=20, c='g', marker='o')
 
-            # Image Preprocessing (Normalization)
-            iris_norm = normalization(img, pupil_circle, iris_circle)
+                # Image Preprocessing (Normalization)
+                iris_norm = normalization(img, pupil_circle, iris_circle)
 
-            # rmov_img = lash_removal(iris_norm, thresh=50)
-            # rmov_img_test = lash_removal_daugman(iris_norm, thresh=30)
+                # rmov_img = lash_removal(iris_norm, thresh=50)
+                # rmov_img_test = lash_removal_daugman(iris_norm, thresh=30)
 
-            # iris_norm_op = normalize_func.selectbox(
-            #     "Select a Iris normalization method",
-            #     (f'{i} Image' for i in ['Inverse', 'Non-Inverse'])).split(' ')[0]
+                # iris_norm_op = normalize_func.selectbox(
+                #     "Select a Iris normalization method",
+                #     (f'{i} Image' for i in ['Inverse', 'Non-Inverse'])).split(' ')[0]
 
-            # if iris_norm_op == 'Inverse':
-            #     iris_norm = 255-iris_norm
-            #     rmov_img = 255-rmov_img
-            #     rmov_img_test = 255-rmov_img_test
+                # if iris_norm_op == 'Inverse':
+                #     iris_norm = 255-iris_norm
+                #     rmov_img = 255-rmov_img
+                #     rmov_img_test = 255-rmov_img_test
 
-            ax1.imshow(iris_norm, cmap='gray')
-            ax1.set_title(f'Normalized Image', fontsize=40)
+                ax1.imshow(iris_norm, cmap='gray')
+                ax1.set_title(f'Normalized Image', fontsize=40)
 
-            # Feature Extraction
-            romv_img, noise_img = lash_removal_daugman(iris_norm, thresh=50)
-            template, mask_noise = encode_iris(
-                romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5)
+                # Feature Extraction
+                romv_img, noise_img = lash_removal_daugman(
+                    iris_norm, thresh=50)
+                template, mask_noise = encode_iris(
+                    romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5)
 
-            templates.append(template)
-            masks.append(mask_noise)
+                templates[i].append(template)
+                masks[i].append(mask_noise)
 
-            ax2.imshow(template, cmap='gray')
-            ax2.set_title(f'Binary Encoded Image', fontsize=40)
+                ax2.imshow(template, cmap='gray')
+                ax2.set_title(f'Binary Encoded Image', fontsize=40)
 
-            # Matching
-            if len(templates) >= 2:
-                hd_raw = HammingDistance(
-                    templates[0], masks[0], templates[i], masks[i])
-                result = 'Match' if hd_raw <= 0.48 else 'Not Match'
-                ax0.set_title(
-                    f'Ham Dist: {round(hd_raw, 3)} ➜ {result}', fontsize=40)
+                # Matching
+                if len(templates[1]) > 0:
+                    hd_raw = HammingDistance(
+                        templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                    result = 'Match' if hd_raw <= 0.48 else 'Not Match'
+                    results.append(hd_raw)
+                    ax0.set_title(
+                        f'Dist: {round(hd_raw, 3)} ➜ {result}', fontsize=40)
+
+    if results[0] <= 0.48 and results[1] <= 0.48:
+        st.success('Match', icon='✅')
+    elif (results[0] <= 0.49 and results[1] <= 0.475) or (results[1] <= 0.49 and results[0] <= 0.475):
+        st.success('Match', icon='✅')
+    else:
+        st.error('Not Match', icon='🚨')
 
     # st.write(f"Hammimg Distance: {round(hd_raw, 4)}")
 
