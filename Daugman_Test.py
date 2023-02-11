@@ -22,14 +22,18 @@ def find_pupil_new(img):
     img = cv2.Canny(img, 0, 50)
     param1 = 200  # 200
     param2 = 120  # 150
+    decrement = 1
     circles = None
     while circles is None and param2 > 20:
         # HoughCircles
         circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 1,
                                    param1=param1, param2=param2,
-                                   minRadius=20, maxRadius=60)
+                                   minRadius=20, maxRadius=80)
 
-        param2 -= 1
+        if circles is not None:
+            break
+
+        param2 -= decrement
 
     if circles is None:
         return None, None, None
@@ -154,10 +158,16 @@ def gaborconvolve_f(img, minw_length, mult, sigma_f):
     logGabor_f[0] = 0
 
     # convolution for each row
-    for r in range(rows):
-        signal = img[r, 0:ndata]
-        imagefft = np.fft.fft(signal)
-        filterb[r, :] = np.fft.ifft(imagefft * logGabor_f)
+    # Not optimized version
+    # for r in range(rows):
+    #     signal = img[r, 0:ndata]
+    #     imagefft = np.fft.fft(signal)
+    #     filterb[r, :] = np.fft.ifft(imagefft * logGabor_f)
+
+    # Optimized version
+    signals = img[:, 0:ndata]
+    imagefft = np.fft.fft(signals, axis=1)
+    filterb = np.fft.ifft(imagefft * logGabor_f, axis=1)
 
     return filterb
 
@@ -371,7 +381,7 @@ with st.spinner('Loading Image...'):
             ax0.plot(snake[:, 1], snake[:, 0], '-b', lw=2)
             ax0.set_title(f'Reference Image', fontsize=40)
 
-            if circles[0] is None:
+            if circles[2] is None:
                 err_msg = f'<p style="color:Red; font-size: 20px;">No circles found in image</p>'
                 st.markdown(err_msg, unsafe_allow_html=True)
                 ax1.imshow(img, cmap='gray')
@@ -421,12 +431,13 @@ with st.spinner('Loading Image...'):
                     ax0.set_title(
                         f'Dist: {round(hd_raw, 3)} ➜ {result}', fontsize=40)
 
-    if results[0] <= 0.48 and results[1] <= 0.48:
-        st.success('Match', icon='✅')
-    elif (results[0] <= 0.49 and results[1] <= 0.475) or (results[1] <= 0.49 and results[0] <= 0.475):
-        st.success('Match', icon='✅')
-    else:
-        st.error('Not Match', icon='🚨')
+    if len(results) == 2:
+        if results[0] <= 0.48 and results[1] <= 0.48:
+            st.success('Match', icon='✅')
+        elif (results[0] <= 0.49 and results[1] <= 0.475) or (results[1] <= 0.49 and results[0] <= 0.475):
+            st.success('Match', icon='✅')
+        else:
+            st.error('Not Match', icon='🚨')
 
     # st.write(f"Hammimg Distance: {round(hd_raw, 4)}")
 
