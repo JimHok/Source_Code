@@ -434,7 +434,7 @@ with st.spinner('Loading Image...'):
     if len(results) == 2:
         if results[0] <= 0.48 and results[1] <= 0.48:
             st.success('Match', icon='✅')
-        elif (results[0] <= 0.49 and results[1] <= 0.475) or (results[1] <= 0.49 and results[0] <= 0.475):
+        elif (results[0] <= 0.495 and results[1] <= 0.475) or (results[1] <= 0.495 and results[0] <= 0.475):
             st.success('Match', icon='✅')
         else:
             st.error('Not Match', icon='🚨')
