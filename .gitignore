@@ -1,3 +1,4 @@
+# Ignore
 /Github Iris Code
 /Daugman_iris.ipynb
 /Image
@@ -7,3 +8,6 @@
 /Iris-Dataset
 /temp_data
 /Model
+
+# Allow
+!Iris-Dataset/CASIA-Iris-Thousand
