@@ -23,6 +23,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 import datetime
 
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
 
 @st.cache_data(ttl=datetime.timedelta(hours=1), show_spinner="Loading dataset...")
 def load_dataset(train_split=0.6, val_split=0.2, test_split=0.2):
@@ -66,7 +69,7 @@ X_train, X_test, y_train, y_test, features_test = load_dataset()
 img_num = 1
 plot_size = 20
 
-st.title('Iris Recognition Demo')
+st.title('Periocular Recognition Demo')
 
 ref_num = st.selectbox(
     "Select Reference Iris Image",
