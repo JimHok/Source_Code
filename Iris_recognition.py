@@ -334,7 +334,7 @@ def iris_match_preload(img_1_L, img_1_R, img_2_L, img_2_R):
     if len(results) == 2:
         if results[0] <= 0.47 and results[1] <= 0.47:
             return 'Match'
-        elif (results[0] <= 0.5 and results[1] <= 0.48) or (results[1] <= 0.5 and results[0] <= 0.48):
+        elif (results[0] <= 0.5 and results[1] <= 0.5):
             return 'Not Sure'
         else:
             return 'Not Match'
