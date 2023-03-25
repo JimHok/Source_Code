@@ -338,3 +338,41 @@ def iris_match_preload(img_1_L, img_1_R, img_2_L, img_2_R):
             return 'Not Sure'
         else:
             return 'Not Match'
+
+
+def iris_match_only(img_1_L, img_1_R, img_2_L, img_2_R, thresh=0.47):
+    imgs = [[img_1_L, img_1_R], [img_2_L, img_2_R]]
+    templates = [[], []]
+    masks = [[], []]
+    results = []
+
+    for i in range(len(imgs)):
+        for j in range(len(imgs[i])):
+            img = imgs[i][j]
+
+            if np.all(img == 0, axis=(0, 1)):
+                return 'Not Match'
+            else:
+                # Image Preprocessing (Normalization)
+                iris_norm = img
+
+                # Feature Extraction
+                romv_img, noise_img = lash_removal_daugman(
+                    iris_norm, thresh=50)
+                template, mask_noise = encode_iris(
+                    romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5)
+
+                templates[i].append(template)
+                masks[i].append(mask_noise)
+
+                # Matching
+                if len(templates[1]) > 0:
+                    hd_raw = HammingDistance(
+                        templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                    results.append(hd_raw)
+
+    if len(results) == 2:
+        if (results[0] <= thresh and results[1] <= thresh) or (results[0] <= 0.5 and results[1] <= thresh) or (results[1] <= 0.5 and results[0] <= thresh):
+            return 'Match'
+        else:
+            return 'Not Match'
