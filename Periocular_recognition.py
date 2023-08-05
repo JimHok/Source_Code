@@ -23,8 +23,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import datetime
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# physical_devices = tf.config.experimental.list_physical_devices('GPU')
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 def combine_LR(X, y, classes, img_num):
@@ -37,8 +37,8 @@ def combine_LR(X, y, classes, img_num):
     return np.array(X_combined), np.array(y_combined)
 
 
-def predict_image(features_test, img_1, img_2):
-    clf = pickle.load(open('Model/svm_VGG16.pickle', "rb"))
+def predict_image(features_test, img_1, img_2, fold):
+    clf = pickle.load(open(f'Model/5fold/svm_VGG16_fold{fold}.pickle', "rb"))
 
     ref_test = np.expand_dims(features_test[img_2], axis=0)
 

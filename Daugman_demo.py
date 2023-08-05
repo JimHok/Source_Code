@@ -379,7 +379,7 @@ with st.spinner('Loading Image...'):
 
             ax0.imshow(img, cmap='gray')
             ax0.plot(snake[:, 1], snake[:, 0], '-b', lw=2)
-            ax0.set_title(f'Reference Image', fontsize=40)
+            ax0.set_title(f'Reference Image', fontsize=40, pad=20)
 
             if circles[2] is None:
                 err_msg = f'<p style="color:Red; font-size: 20px;">No circles found in image</p>'
@@ -408,7 +408,11 @@ with st.spinner('Loading Image...'):
                 #     rmov_img_test = 255-rmov_img_test
 
                 ax1.imshow(iris_norm, cmap='gray')
-                ax1.set_title(f'Normalized Image', fontsize=40)
+                box = ax1.get_position()
+                ax1.set_position(
+                    [box.x0, box.y0, box.width * 1, box.height * 0.6])
+                ax1.set_aspect('auto')
+                ax1.set_title(f'Normalized Image', fontsize=40, pad=20)
 
                 # Feature Extraction
                 romv_img, noise_img = lash_removal_daugman(
@@ -420,7 +424,7 @@ with st.spinner('Loading Image...'):
                 masks[i].append(mask_noise)
 
                 ax2.imshow(template, cmap='gray')
-                ax2.set_title(f'Binary Encoded Image', fontsize=40)
+                ax2.set_title(f'Binary Encoded Image', fontsize=40, pad=20)
 
                 # Matching
                 if len(templates[1]) > 0:
