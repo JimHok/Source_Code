@@ -178,7 +178,7 @@ def create_iris_norm_enhanced_multi(img_folder, test_beg=None, test_til=None):
                 if file.endswith('.jpg'):
                     files.append(file)
 
-    with mp.Pool(processes=mp.cpu_count()) as pool:
+    with mp.Pool(processes=8) as pool:
         try:
             num_files_per_dir = 10
             dir_files = [files[i:i+num_files_per_dir]
