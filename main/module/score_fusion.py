@@ -288,3 +288,43 @@ def accuracy_score_multi_thread(labels, model, iris_norm_L, iris_norm_R, X_test,
             pass
 
     return predict, ground_truth
+
+
+def accuracy_score_preload(labels, model, iris_scores, X_test):
+    predict = []
+    ground_truth = []
+    total_test_img = 10
+
+    for pair in tqdm(range(len(labels))):
+        img_1_fol = int(labels[pair][0][:-2])
+        img_2_fol = int(labels[pair][1][:-2])
+
+        if img_1_fol == img_2_fol:
+            ground_truth.append(1)
+        else:
+            ground_truth.append(0)
+
+        iris_score = iris_scores[pair]
+        # if (iris_score[0][0] <= 0.45 and iris_score[0][1] <= 0.45) or (iris_score[1][0] <= 0.62 and iris_score[1][1] <= 0.62) or (iris_score[3][0] <= 0.61 and iris_score[3][1] <= 0.61):
+        #     iris_result = 'Match'
+        if iris_score[0][0] <= 0.37 or iris_score[0][1] <= 0.37 or iris_score[1][0] <= 0.52 or iris_score[1][1] <= 0.52 or iris_score[3][0] <= 0.5 or iris_score[3][1] <= 0.5:
+            iris_result = 'Match'
+        elif (iris_score[0][0] >= 0.48 and iris_score[0][1] >= 0.48) or (iris_score[1][0] >= 0.66 and iris_score[1][1] >= 0.66) or (iris_score[3][0] >= 0.65 and iris_score[3][1] >= 0.65):
+            iris_result = 'Not Match'
+        else:
+            iris_result = 'Not Sure'
+
+        if iris_result == 'Match':
+            predict.append(1)
+
+        elif iris_result == 'Not Sure' or iris_result == 'No Iris':
+            peri_score = peri_match_preload(model, X_test[pair].reshape(1, -1))
+            if peri_score == 'Match':
+                predict.append(1)
+            else:
+                predict.append(0)
+
+        else:
+            predict.append(0)
+
+    return predict, ground_truth

@@ -30,7 +30,7 @@ def HammingDistance(template1, mask1, template2, mask2):
     hd = np.nan
 
     # Shifting template left and right, use the lowest Hamming distance
-    for shifts in range(-10, 10):
+    for shifts in range(-50, 50):
         template1s = shiftbits_ham(template1, shifts)
         mask1s = shiftbits_ham(mask1, shifts)
 
@@ -55,7 +55,7 @@ def HammingDistance(template1, mask1, template2, mask2):
 def JaccardDistance(template1, mask1, template2, mask2):
 
     bitsdiff_arr = []
-    for _, shifts in enumerate(range(-10, 10)):
+    for _, shifts in enumerate(range(-50, 50)):
         template1s = shiftbits_ham(template1, shifts)
         mask1s = shiftbits_ham(mask1, shifts)
 
@@ -75,7 +75,7 @@ def JaccardDistance(template1, mask1, template2, mask2):
 def TanimotoDistance(template1, mask1, template2, mask2):
 
     rog_dist = []
-    for i, shifts in enumerate(range(-10, 10)):
+    for i, shifts in enumerate(range(-50, 50)):
         template1s = shiftbits_ham(template1, shifts)
         mask1s = shiftbits_ham(mask1, shifts)
 
@@ -100,10 +100,10 @@ def WeightedEuclideanDistance(template1, mask1, template2, mask2):
         std.append(tstd)
     # print(std)
     # print(len(std), " ", len(std[0]))
-    bitsdiff_arr = np.empty(17, dtype=np.float64)
-    totalbits_arr = np.empty(17, dtype=np.float64)
+    bitsdiff_arr = np.empty(40, dtype=np.float64)
+    totalbits_arr = np.empty(40, dtype=np.float64)
 
-    for i, shifts in enumerate(range(-8, 9)):
+    for i, shifts in enumerate(range(-20, 20)):
         template1s = shiftbits_ham(template1, shifts)
         mask1s = shiftbits_ham(mask1, shifts)
 

@@ -1,3 +1,5 @@
+import os
+import pickle
 import concurrent.futures
 import multiprocessing as mp
 
@@ -49,17 +51,52 @@ def get_fusion_scores_multi_thread(iris_norm_L, iris_norm_R, labels):
     return np.array(fusion_scores)
 
 
+# def get_fusion_scores_multi_process(iris_norm_L, iris_norm_R, labels):
+#     total_test_img = 10
+#     fusion_scores = []
+#     with mp.Pool(processes=8) as pool:
+#         results = [pool.apply_async(iris_score_fusion_preload, args=(iris_norm_L[(int(labels[pair][0][:-2])) * total_test_img + int(labels[pair][0][-2:])],
+#                                                                      iris_norm_R[(
+#                                                                          int(labels[pair][0][:-2])) * total_test_img + int(labels[pair][0][-2:])],
+#                                                                      iris_norm_L[(
+#                                                                          int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])],
+#                                                                      iris_norm_R[(int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])])) for pair in range(len(labels))]
+#         for result in tqdm(results):
+#             fusion_scores.append(result.get())
+
+#     return np.array(fusion_scores)
+
+
 def get_fusion_scores_multi_process(iris_norm_L, iris_norm_R, labels):
     total_test_img = 10
     fusion_scores = []
+    checkpoint_file = "checkpoint/fusion_scores_checkpoint.pkl"
+
+    # Check if checkpoint file exists and load saved state of fusion_scores
+    if os.path.exists(checkpoint_file):
+        with open(checkpoint_file, "rb") as f:
+            fusion_scores = pickle.load(f)
+        start_index = len(fusion_scores)
+    else:
+        start_index = 0
+
     with mp.Pool(processes=8) as pool:
         results = [pool.apply_async(iris_score_fusion_preload, args=(iris_norm_L[(int(labels[pair][0][:-2])) * total_test_img + int(labels[pair][0][-2:])],
                                                                      iris_norm_R[(
                                                                          int(labels[pair][0][:-2])) * total_test_img + int(labels[pair][0][-2:])],
                                                                      iris_norm_L[(
                                                                          int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])],
-                                                                     iris_norm_R[(int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])])) for pair in range(len(labels))]
-        for result in tqdm(results):
+                                                                     iris_norm_R[(int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])])) for pair in range(start_index, len(labels))]
+
+        for i, result in enumerate(tqdm(results, initial=start_index, total=len(labels))):
+            # Checkpoint every 100 iterations
+            if (i + start_index) % 100 == 0:
+                with open(checkpoint_file, "wb") as f:
+                    pickle.dump(fusion_scores, f)
             fusion_scores.append(result.get())
+
+    # Save final state of fusion_scores to checkpoint file
+    with open(checkpoint_file, "wb") as f:
+        pickle.dump(fusion_scores, f)
 
     return np.array(fusion_scores)

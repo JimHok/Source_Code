@@ -287,9 +287,11 @@ def iris_match_preload(img_1_L, img_1_R, img_2_L, img_2_R, formula=False):
 
     if not formula:
         if len(results) == 2:
-            if (results[0][0] <= 0.44 and results[1][0] <= 0.44) or (results[0][1] <= 0.61 and results[1][1] <= 0.61) or (results[0][2] <= 0.6 and results[1][2] <= 0.6):
+            if (results[0][0] <= 0.45 and results[1][0] <= 0.45) or (results[0][1] <= 0.62 and results[1][1] <= 0.62) or (results[0][2] <= 0.61 and results[1][2] <= 0.61):
                 return 'Match'
-            elif (results[0][0] >= 0.48 and results[1][0] >= 0.48) and (results[0][1] >= 0.67 and results[1][1] >= 0.67) and (results[0][2] >= 0.66 and results[1][2] >= 0.66):
+            elif results[0][0] <= 0.4 or results[1][0] <= 0.4 or results[0][1] <= 0.57 or results[1][1] <= 0.57 or results[0][2] <= 0.55 or results[1][2] <= 0.55:
+                return 'Match'
+            elif (results[0][0] >= 0.49 and results[1][0] >= 0.49) and (results[0][1] >= 0.67 and results[1][1] >= 0.67) and (results[0][2] >= 0.66 and results[1][2] >= 0.66):
                 return 'Not Match'
             else:
                 return 'Not Sure'
