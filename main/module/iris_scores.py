@@ -27,7 +27,7 @@ def get_fusion_scores(iris_norm_L, iris_norm_R, labels):
     return np.array(fusion_scores)
 
 
-def get_fusion_scores_multi_thread(iris_norm_L, iris_norm_R, labels):
+def get_fusion_scores_mt(iris_norm_L, iris_norm_R, labels):
     total_test_img = 10
     fusion_scores = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -67,10 +67,10 @@ def get_fusion_scores_multi_thread(iris_norm_L, iris_norm_R, labels):
 #     return np.array(fusion_scores)
 
 
-def get_fusion_scores_multi_process(iris_norm_L, iris_norm_R, labels):
+def get_fusion_scores_mp(iris_norm_L, iris_norm_R, labels, checkpoint_file):
     total_test_img = 10
     fusion_scores = []
-    checkpoint_file = "checkpoint/fusion_scores_checkpoint.pkl"
+    checkpoint_file = f"checkpoint/{checkpoint_file}"
 
     # Check if checkpoint file exists and load saved state of fusion_scores
     if os.path.exists(checkpoint_file):

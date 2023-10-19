@@ -104,11 +104,12 @@ def plot_confusion_matrix(y_test_final, y_predict):
     # display the number of samples in each cell
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            if cm[i, j] > 1000:
+            if cm[i, j] > cm.max() / 2:
                 ax.text(j, i, str(cm[i, j]), ha='center',
                         va='center', color='white')
             else:
-                ax.text(j, i, str(cm[i, j]), ha='center', va='center')
+                ax.text(j, i, str(cm[i, j]), ha='center',
+                        va='center', color='black')
 
     # set the x and y axis ticks to display only 1 and 0
     ax.set_xticks([0, 1])
