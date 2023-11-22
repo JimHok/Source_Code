@@ -185,6 +185,7 @@ def plot_cm_mul(y_test_final, y_predict, classifiers, plot_num=1):
                     )
 
         # set the x and y axis ticks to display only 1 and 0
+        axs[plot].tick_params(axis="both", labelsize=27)
         axs[plot].set_xticks([0, 1])
         axs[plot].set_yticks([0, 1])
 
