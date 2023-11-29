@@ -1,0 +1,6 @@
+model: LogisticRegression
+dataset: features_final_80.npz
+parameter:
+  C: 0.1
+  penalty: l1
+  solver: liblinear
