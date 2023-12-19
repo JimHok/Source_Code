@@ -11,7 +11,7 @@ import sys
 sys.path.append("D:/Users/jimyj/Desktop/TAIST/Thesis/Source_Code/main")
 
 
-def create_dataset(img_folder, fold):
+def load_VASIA(img_folder, fold):
     test_data = []
     test_label = []
     fold_list = [i for i in range(fold - 1, fold + 3)]
@@ -203,7 +203,7 @@ ref_img_num = 200
 test_img_num = 200
 
 if f"Fusion_x_fold{fold_num}.npy" not in list(os.listdir("temp_data")):
-    X_test, y_test = create_dataset("Iris-Dataset/CASIA-Iris-Thousand", fold_num)
+    X_test, y_test = load_VASIA("Iris-Dataset/CASIA-Iris-Thousand", fold_num)
 
 features_test, Fusion_X, Fusion_y = load_dataset(fold_num)
 
