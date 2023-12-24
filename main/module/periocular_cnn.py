@@ -37,14 +37,14 @@ def load_VASIA(img_folder, img_num):
                 img = image.img_to_array(img)
                 iris_data.append(img)
                 iris_label[0].append(dir1 + "0" if eye == "L" else dir1 + "1")
-                iris_label[1].append(file)
+                iris_label[1].append(file[6:8])
 
     return np.array(iris_data), np.array(iris_label)
 
 
-def load_UBIPr():
+def load_UBIPr(img_folder):
     files_list = []
-    for files in tqdm(os.listdir("Iris-Dataset/UBIPr")):
+    for files in os.listdir(img_folder):
         if files.endswith(".jpg") and "S1" in files:
             files = files.replace(".jpg", "")
             files = files.split("_")
@@ -63,9 +63,11 @@ def load_UBIPr():
         img = image.img_to_array(img)
         iris_data.append(img)
         iris_label[0].append(
-            str(C).zfill(3) + "0" if C % 2 != 0 else str(C - 1).zfill(3) + "1"
+            str(C // 2).zfill(3) + "0"
+            if C % 2 != 0
+            else str((C - 1) // 2).zfill(3) + "1"
         )
-        iris_label[1].append(f"C{C}_S{S}_I{I}.jpg")
+        iris_label[1].append(f"{I}")
 
     return np.array(iris_data), np.array(iris_label)
 
@@ -78,7 +80,7 @@ def combine_LR(X, y, classes, img_num):
         for j in range(img_num):
             X_combined.append(np.concatenate((X[i + j], X[i + j + img_num]), axis=1))
             y_combined.append("".join([*y[0][i]][:3]))
-            img_label.append(y[1][i + j][6:8])
+            img_label.append(y[1][i + j].zfill(2))
     return np.array(X_combined), np.array(y_combined), np.array(img_label)
 
 

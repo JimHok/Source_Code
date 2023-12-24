@@ -163,16 +163,16 @@ def process_image(image_path, dir1, eye, file, df):
             df["iris_norm_R"][int(dir1) * 10 + int(file[-6:-4])] = iris_norm
 
 
-def create_iris_norm_enhanced_multi(img_folder, test_beg=None, test_til=None):
-    total = len(os.listdir(img_folder)[test_beg:test_til]) * 2 * 10
+def create_iris_norm_en_mul(img_folder, test_beg=None, test_til=None, img_copy=10):
+    total = len(os.listdir(img_folder)[test_beg:test_til]) * 2 * img_copy
     if test_beg is None:
         iris_norm_L = [[] for _ in range(total // 2)]
         iris_norm_R = [[] for _ in range(total // 2)]
         files_name = [[] for _ in range(total // 2)]
     else:
-        iris_norm_L = [[] for _ in range(test_til * 10)]
-        iris_norm_R = [[] for _ in range(test_til * 10)]
-        files_name = [[] for _ in range(test_til * 10)]
+        iris_norm_L = [[] for _ in range((test_til - test_beg) * img_copy)]
+        iris_norm_R = [[] for _ in range((test_til - test_beg) * img_copy)]
+        files_name = [[] for _ in range((test_til - test_beg) * img_copy)]
     df = pd.DataFrame(
         {
             "files_name": files_name,
@@ -184,21 +184,37 @@ def create_iris_norm_enhanced_multi(img_folder, test_beg=None, test_til=None):
     files = []
 
     for dir1 in os.listdir(img_folder)[test_beg:test_til]:
+        left_eye_files = os.listdir(os.path.join(img_folder, dir1, "L"))
+        right_eye_files = os.listdir(os.path.join(img_folder, dir1, "R"))
+        if len(left_eye_files) < img_copy or len(right_eye_files) < img_copy:
+            continue
         dir1s.append(dir1)
         for eye in os.listdir(os.path.join(img_folder, dir1)):
-            for file in list(os.listdir(os.path.join(img_folder, dir1, eye))):
+            for file in list(
+                os.listdir(os.path.join(img_folder, dir1, eye))[i]
+                for i in range(img_copy)
+            ):
                 if file.endswith(".jpg"):
                     files.append(file)
 
     with mp.Pool(processes=8) as pool:
         try:
-            num_files_per_dir = 10
+            num_files_per_dir = img_copy
+            beg_dir1s = int(dir1s[0])
+            beg_files = int(int(files[0][-6:-4]))
             dir_files = [
                 files[i : i + num_files_per_dir]
                 for i in range(0, len(files), num_files_per_dir)
             ]
             image_combinations = [
-                (dir1s[i // 2], dir1[j])
+                (
+                    img_folder,
+                    num_files_per_dir,
+                    dir1s[i // 2],
+                    dir1[j],
+                    beg_dir1s,
+                    beg_files,
+                )
                 for i, dir1 in enumerate(dir_files)
                 for j in range(len(dir1))
             ]
@@ -224,10 +240,8 @@ def create_iris_norm_enhanced_multi(img_folder, test_beg=None, test_til=None):
 
 
 def process_image_multi(args):
-    dir1, files = args
-    image_path = os.path.join(
-        "Iris-Dataset/CASIA-Iris-Thousand", dir1, files[5:6], files
-    )
+    img_folder, num_files_per_dir, dir1, files, beg_dir1s, beg_files = args
+    image_path = os.path.join(img_folder, dir1, files[5:6], files)
     image1 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
     # Get the reflection mask
@@ -257,14 +271,18 @@ def process_image_multi(args):
             return (
                 files,
                 "iris_norm_L",
-                int(dir1) * 10 + int(files[-6:-4]),
+                (int(dir1) - beg_dir1s) * num_files_per_dir
+                + int(files[-6:-4])
+                - beg_files,
                 np.zeros((64, 400)),
             )
         else:
             return (
                 files,
                 "iris_norm_R",
-                int(dir1) * 10 + int(files[-6:-4]),
+                (int(dir1) - beg_dir1s) * num_files_per_dir
+                + int(files[-6:-4])
+                - beg_files,
                 np.zeros((64, 400)),
             )
 
@@ -272,10 +290,24 @@ def process_image_multi(args):
         # Image Preprocessing (Normalization)
         iris_norm = normalization(img, pupil_circle, iris_circle)
         if files[5:6] == "L":
-            return files, "iris_norm_L", int(dir1) * 10 + int(files[-6:-4]), iris_norm
+            return (
+                files,
+                "iris_norm_L",
+                (int(dir1) - beg_dir1s) * num_files_per_dir
+                + int(files[-6:-4])
+                - beg_files,
+                iris_norm,
+            )
 
         else:
-            return files, "iris_norm_R", int(dir1) * 10 + int(files[-6:-4]), iris_norm
+            return (
+                files,
+                "iris_norm_R",
+                (int(dir1) - beg_dir1s) * num_files_per_dir
+                + int(files[-6:-4])
+                - beg_files,
+                iris_norm,
+            )
 
 
 def create_iris_norm_enhanced_dask(img_folder, test_beg=None, test_til=None):
@@ -359,31 +391,41 @@ def create_iris_norm_seg(img_folder, test_beg=None, test_til=None):
     return np.array(list(iris_norm_L)), np.array(list(iris_norm_R))
 
 
-def save_iris_norm(iris_norm_new):
-    iris_norm_L_new = np.array(
-        list(
-            iris_norm_new[~iris_norm_new["files_name"].apply(lambda x: len(x) == 0)][
-                "iris_norm_L"
-            ]
-        )
+def save_iris_norm(path, iris_norm_new):
+    # iris_norm_L_new = np.array(
+    #     list(
+    #         iris_norm_new[~iris_norm_new["files_name"].apply(lambda x: len(x) == 0)][
+    #             "iris_norm_L"
+    #         ]
+    #     )
+    # )
+    # iris_norm_R_new = np.array(
+    #     list(
+    #         iris_norm_new[~iris_norm_new["files_name"].apply(lambda x: len(x) == 0)][
+    #             "iris_norm_R"
+    #         ]
+    #     )
+    # )
+
+    iris_norm_new["iris_norm_L"] = iris_norm_new["iris_norm_L"].apply(
+        lambda x: np.zeros((64, 400)) if len(x) == 0 else x
     )
-    iris_norm_R_new = np.array(
-        list(
-            iris_norm_new[~iris_norm_new["files_name"].apply(lambda x: len(x) == 0)][
-                "iris_norm_R"
-            ]
-        )
+    iris_norm_new["iris_norm_R"] = iris_norm_new["iris_norm_R"].apply(
+        lambda x: np.zeros((64, 400)) if len(x) == 0 else x
     )
+    iris_norm_L_new = np.array(list(iris_norm_new["iris_norm_L"]))
+    iris_norm_R_new = np.array(list(iris_norm_new["iris_norm_R"]))
 
     # load the features from the file
-    with np.load("temp_data/iris_norm_all.npz") as data:
-        iris_norm_L = data["iris_norm_L"]
-        iris_norm_R = data["iris_norm_R"]
-
-    iris_norm_L = np.append(iris_norm_L, iris_norm_L_new, axis=0)
-    iris_norm_R = np.append(iris_norm_R, iris_norm_R_new, axis=0)
+    try:
+        with np.load(path) as data:
+            iris_norm_L = data["iris_norm_L"]
+            iris_norm_R = data["iris_norm_R"]
+        iris_norm_L = np.append(iris_norm_L, iris_norm_L_new, axis=0)
+        iris_norm_R = np.append(iris_norm_R, iris_norm_R_new, axis=0)
+    except:
+        iris_norm_L = iris_norm_L_new
+        iris_norm_R = iris_norm_R_new
 
     # save the features to a file
-    np.savez(
-        "temp_data/iris_norm_all.npz", iris_norm_L=iris_norm_L, iris_norm_R=iris_norm_R
-    )
+    np.savez(path, iris_norm_L=iris_norm_L, iris_norm_R=iris_norm_R)

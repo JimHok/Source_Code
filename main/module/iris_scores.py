@@ -21,8 +21,9 @@ def get_fusion_scores(iris_norm_L, iris_norm_R, labels):
         img_1_R = iris_norm_R[(img_1_fol) * total_test_img + img_1_item]
         img_2_L = iris_norm_L[(img_2_fol) * total_test_img + img_2_item]
         img_2_R = iris_norm_R[(img_2_fol) * total_test_img + img_2_item]
-        fusion_scores.append(iris_score_fusion_preload(
-            img_1_L, img_1_R, img_2_L, img_2_R))
+        fusion_scores.append(
+            iris_score_fusion_preload(img_1_L, img_1_R, img_2_L, img_2_R)
+        )
 
     return np.array(fusion_scores)
 
@@ -42,10 +43,15 @@ def get_fusion_scores_mt(iris_norm_L, iris_norm_R, labels):
             img_1_R = iris_norm_R[(img_1_fol) * total_test_img + img_1_item]
             img_2_L = iris_norm_L[(img_2_fol) * total_test_img + img_2_item]
             img_2_R = iris_norm_R[(img_2_fol) * total_test_img + img_2_item]
-            futures.append(executor.submit(
-                iris_score_fusion_preload, img_1_L, img_1_R, img_2_L, img_2_R))
+            futures.append(
+                executor.submit(
+                    iris_score_fusion_preload, img_1_L, img_1_R, img_2_L, img_2_R
+                )
+            )
 
-        for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+        for future in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures)
+        ):
             fusion_scores.append(future.result())
 
     return np.array(fusion_scores)
@@ -67,8 +73,9 @@ def get_fusion_scores_mt(iris_norm_L, iris_norm_R, labels):
 #     return np.array(fusion_scores)
 
 
-def get_fusion_scores_mp(iris_norm_L, iris_norm_R, labels, checkpoint_file):
-    total_test_img = 10
+def get_fusion_scores_mp(
+    iris_norm_L, iris_norm_R, labels, total_test_img, checkpoint_file, start_label=0
+):
     fusion_scores = []
     checkpoint_file = f"checkpoint/{checkpoint_file}"
 
@@ -81,14 +88,34 @@ def get_fusion_scores_mp(iris_norm_L, iris_norm_R, labels, checkpoint_file):
         start_index = 0
 
     with mp.Pool(processes=8) as pool:
-        results = [pool.apply_async(iris_score_fusion_preload, args=(iris_norm_L[(int(labels[pair][0][:-2])) * total_test_img + int(labels[pair][0][-2:])],
-                                                                     iris_norm_R[(
-                                                                         int(labels[pair][0][:-2])) * total_test_img + int(labels[pair][0][-2:])],
-                                                                     iris_norm_L[(
-                                                                         int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])],
-                                                                     iris_norm_R[(int(labels[pair][1][:-2])) * total_test_img + int(labels[pair][1][-2:])])) for pair in range(start_index, len(labels))]
+        results = [
+            pool.apply_async(
+                iris_score_fusion_preload,
+                args=(
+                    iris_norm_L[
+                        (int(labels[pair][0][:-2]) - start_label) * total_test_img
+                        + int(labels[pair][0][-2:])
+                    ],
+                    iris_norm_R[
+                        (int(labels[pair][0][:-2]) - start_label) * total_test_img
+                        + int(labels[pair][0][-2:])
+                    ],
+                    iris_norm_L[
+                        (int(labels[pair][1][:-2]) - start_label) * total_test_img
+                        + int(labels[pair][1][-2:])
+                    ],
+                    iris_norm_R[
+                        (int(labels[pair][1][:-2]) - start_label) * total_test_img
+                        + int(labels[pair][1][-2:])
+                    ],
+                ),
+            )
+            for pair in range(start_index, len(labels))
+        ]
 
-        for i, result in enumerate(tqdm(results, initial=start_index, total=len(labels))):
+        for i, result in enumerate(
+            tqdm(results, initial=start_index, total=len(labels))
+        ):
             # Checkpoint every 100 iterations
             if (i + start_index) % 100 == 0:
                 with open(checkpoint_file, "wb") as f:
