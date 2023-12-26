@@ -18,7 +18,7 @@ patch_sklearn()
 
 def load_VASIA(img_folder, img_num):
     iris_data = []
-    iris_label = [[], []]
+    iris_label = [[], [], []]
 
     for dir1 in tqdm(os.listdir(img_folder)):
         left_eye_files = os.listdir(os.path.join(img_folder, dir1, "L"))
@@ -38,11 +38,12 @@ def load_VASIA(img_folder, img_num):
                 iris_data.append(img)
                 iris_label[0].append(dir1 + "0" if eye == "L" else dir1 + "1")
                 iris_label[1].append(file[6:8])
+                iris_label[2].append(image_path)
 
     return np.array(iris_data), np.array(iris_label)
 
 
-def load_UBIPr(img_folder):
+def load_UBIPr(img_folder, img_num):
     files_list = []
     for files in os.listdir(img_folder):
         if files.endswith(".jpg") and "S1" in files:
@@ -54,9 +55,19 @@ def load_UBIPr(img_folder):
             files_list.append(files)
     files_list = sorted(files_list)
     files_db = pd.DataFrame(files_list, columns=["C", "S", "I"])
+    counts = files_db["C"].value_counts()
+    index = counts[counts != img_num].index
+    new_index = []
+    for i in index:
+        new_index.append(i)
+        if i % 2 == 0:
+            new_index.append(i - 1)
+        else:
+            new_index.append(i + 1)
+    files_db = files_db.loc[~files_db["C"].isin(list(set(new_index)))]
 
     iris_data = []
-    iris_label = [[], []]
+    iris_label = [[], [], []]
     for C, S, I in tqdm(files_db.values):
         image_path = f"Iris-Dataset/UBIPr/C{C}_S{S}_I{I}.jpg"
         img = image.load_img(image_path, target_size=(64, 64))
@@ -67,7 +78,8 @@ def load_UBIPr(img_folder):
             if C % 2 != 0
             else str((C - 1) // 2).zfill(3) + "1"
         )
-        iris_label[1].append(f"{I}")
+        iris_label[1].append(f"{I}".zfill(2))
+        iris_label[2].append(image_path)
 
     return np.array(iris_data), np.array(iris_label)
 

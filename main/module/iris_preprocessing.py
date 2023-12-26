@@ -391,6 +391,99 @@ def create_iris_norm_seg(img_folder, test_beg=None, test_til=None):
     return np.array(list(iris_norm_L)), np.array(list(iris_norm_R))
 
 
+def iris_norm_final(data_df, test_beg, test_til, img_copy=10):
+    data_df = pd.DataFrame(data_df.T, columns=["dir1", "img_num", "img_path"])
+    total = (test_til - test_beg) * img_copy
+
+    iris_norm_L = [[] for _ in range(total)]
+    iris_norm_R = [[] for _ in range(total)]
+    files_name = [[] for _ in range(total)]
+
+    df = pd.DataFrame(
+        {
+            "files_name": files_name,
+            "iris_norm_L": iris_norm_L,
+            "iris_norm_R": iris_norm_R,
+        }
+    )
+
+    with mp.Pool(processes=8) as pool:
+        try:
+            data_df = data_df.loc[
+                data_df.dir1.str[:-1].astype(int).between(test_beg, test_til - 1)
+            ]
+            num_files_per_dir = img_copy
+            beg_dir1s = int(data_df.dir1.values[0][:-1])
+            beg_files = int(data_df.img_num.values[0])
+            image_combinations = [
+                (
+                    data_df[i : i + 1],
+                    num_files_per_dir,
+                    beg_dir1s,
+                    beg_files,
+                )
+                for i in range(len(data_df))
+            ]
+
+            results = list(
+                tqdm(
+                    pool.imap(process_img_final, image_combinations),
+                    total=total * 2,
+                    desc="Normalizing",
+                )
+            )
+            for files, img_name, img_num, img in results:
+                df["files_name"][img_num] = files
+                df[img_name][img_num] = img
+
+        except Exception as e:
+            print(traceback.format_exc())
+            print(e)
+            if e != "KeyboardInterrupt":
+                pd.to_pickle(df, "temp_data/iris_norm.pkl")
+
+    return df
+
+
+def process_img_final(args):
+    data_df, num_files_per_dir, beg_dir1s, beg_files = args
+    dir1 = data_df.dir1.values[0]
+    files = data_df.img_num.values[0]
+    image_path = data_df.img_path.values[0]
+    image1 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+    # Get the reflection mask
+    mask = adaptive_thresholding(image1)
+    mask = region_size_filtering(mask)
+    mask = morphological_dilation(mask)
+
+    # Remove reflections
+    img_no_reflections = remove_reflections(image1, mask)
+    preprocess_image = preprocessing(img_no_reflections)
+    # preprocess_image = img_no_reflections
+    targeting_image = find_target_pixel(preprocess_image, 120)
+
+    # Process Daughman
+    pupil = Daughman_Algorithm(preprocess_image, targeting_image)
+
+    img = read_image(image_path)
+    _, snake, circles = localization(
+        img, N=400, pupil_loc=(pupil[0] // 2 * 3, pupil[1] // 2 * 3, pupil[2] // 2 * 3)
+    )
+
+    pupil_circle = circles
+    iris_circle = np.flip(np.array(snake).astype(int), 1)
+
+    return (
+        dir1[:-1],
+        "iris_norm_L" if dir1[-1] == "0" else "iris_norm_R",
+        (int(dir1[:-1]) - beg_dir1s) * num_files_per_dir + int(files) - beg_files,
+        np.zeros((64, 400))
+        if circles[2] is None
+        else normalization(img, pupil_circle, iris_circle),
+    )
+
+
 def save_iris_norm(path, iris_norm_new):
     # iris_norm_L_new = np.array(
     #     list(
