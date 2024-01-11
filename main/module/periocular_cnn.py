@@ -69,7 +69,7 @@ def load_UBIPr(img_folder, img_num):
     iris_data = []
     iris_label = [[], [], []]
     for C, S, I in tqdm(files_db.values):
-        image_path = f"Iris-Dataset/UBIPr/C{C}_S{S}_I{I}.jpg"
+        image_path = f"{img_folder}/C{C}_S{S}_I{I}.jpg"
         img = image.load_img(image_path, target_size=(64, 64))
         img = image.img_to_array(img)
         iris_data.append(img)
@@ -82,6 +82,43 @@ def load_UBIPr(img_folder, img_num):
         iris_label[2].append(image_path)
 
     return np.array(iris_data), np.array(iris_label)
+
+
+def load_UBIPr_peri(img_folder, img_num):
+    files_list = []
+    for files in os.listdir(img_folder):
+        if files.endswith(".jpg") and "S1" in files:
+            files = files.replace(".jpg", "")
+            files = files.split("_")
+            files[0] = int(files[0].replace("C", ""))
+            files[1] = int(files[1].replace("S", ""))
+            files[2] = int(files[2].replace("I", ""))
+            files_list.append(files)
+    files_list = sorted(files_list)
+    files_db = pd.DataFrame(files_list, columns=["C", "S", "I"])
+    counts = files_db["C"].value_counts()
+    index = counts[counts != img_num].index
+    new_index = []
+    for i in index:
+        new_index.append(i)
+        if i % 2 == 0:
+            new_index.append(i - 1)
+        else:
+            new_index.append(i + 1)
+    files_db = files_db.loc[~files_db["C"].isin(list(set(new_index)))]
+
+    iris_data = []
+    iris_label = [[], [], []]
+    for C, S, I in tqdm(files_db.values):
+        image_path = f"{img_folder}/C{C}_S{S}_I{I}.jpg"
+        img = image.load_img(image_path, target_size=(64, 128))
+        img = image.img_to_array(img)
+        iris_data.append(img)
+        iris_label[0].append(str((C + 1) // 2).zfill(3))
+        iris_label[1].append(f"{I}".zfill(2))
+        iris_label[2].append(image_path)
+
+    return np.array(iris_data), np.array(iris_label[0]), np.array(iris_label[1])
 
 
 def combine_LR(X, y, classes, img_num):

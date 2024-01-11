@@ -414,19 +414,16 @@ def accuracy_score_preload(labels, model, iris_scores, X_test):
 
         # Iris Match
         if (
-            iris_score[0][0] <= 0.37
-            or iris_score[0][1] <= 0.37
-            or iris_score[1][0] <= 0.52
-            or iris_score[1][1] <= 0.52
-            or iris_score[3][0] <= 0.5
-            or iris_score[3][1] <= 0.5
+            (iris_score[0][0] <= 0.4 and iris_score[0][1] <= 0.4)
+            or (iris_score[1][0] <= 0.54 and iris_score[1][1] <= 0.54)
+            or (iris_score[3][0] <= 0.53 and iris_score[3][1] <= 0.53)
         ):
             predict.append(1)
         # Iris Not Match
         elif (
-            (iris_score[0][0] >= 0.48 and iris_score[0][1] >= 0.48)
-            or (iris_score[1][0] >= 0.66 and iris_score[1][1] >= 0.66)
-            or (iris_score[3][0] >= 0.65 and iris_score[3][1] >= 0.65)
+            (iris_score[0][0] >= 0.5 and iris_score[0][1] >= 0.5)
+            or (iris_score[1][0] >= 0.68 and iris_score[1][1] >= 0.68)
+            or (iris_score[3][0] >= 0.67 and iris_score[3][1] >= 0.67)
         ):
             predict.append(0)
         # Iris Not Sure

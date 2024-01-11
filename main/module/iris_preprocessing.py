@@ -522,3 +522,15 @@ def save_iris_norm(path, iris_norm_new):
 
     # save the features to a file
     np.savez(path, iris_norm_L=iris_norm_L, iris_norm_R=iris_norm_R)
+
+
+def plot_iris_norm(iris_norm_L, iris_norm_R, image):
+    fig = plt.figure(figsize=(20, 2 * image))
+    for i in range(image):
+        plt.subplot(image, 2, i * 2 + 1)
+        plt.imshow(iris_norm_L[i], cmap="gray")
+        plt.title(f"Left Iris: {(i)%10}")
+        plt.subplot(image, 2, i * 2 + 2)
+        plt.imshow(iris_norm_R[i], cmap="gray")
+        plt.title(f"Right Iris: {(i)%10}")
+    plt.show()

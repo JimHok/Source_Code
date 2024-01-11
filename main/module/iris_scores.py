@@ -108,6 +108,18 @@ def get_fusion_scores_mp(
                         (int(labels[pair][1][:-2]) - start_label) * total_test_img
                         + int(labels[pair][1][-2:])
                     ],
+                )
+                if (int(labels[pair][0][:-2]) - start_label) * total_test_img
+                + int(labels[pair][0][-2:])
+                < len(iris_norm_L)
+                and (int(labels[pair][1][:-2]) - start_label) * total_test_img
+                + int(labels[pair][1][-2:])
+                < len(iris_norm_L)
+                else (
+                    np.zeros((64, 400)),
+                    np.zeros((64, 400)),
+                    np.zeros((64, 400)),
+                    np.zeros((64, 400)),
                 ),
             )
             for pair in range(start_index, len(labels))
