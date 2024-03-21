@@ -7,39 +7,43 @@ from itertools import product
 import concurrent.futures
 import os
 import sys
-sys.path.append("C:/Users/jimyj/Desktop/TAIST/Thesis/Source_Code/main")
+
+sys.path.append("D:/Users/jimyj/Desktop/TAIST/Thesis/Source_Code/main")
 
 
-def create_dataset(img_folder, fold):
+def load_VASIA(img_folder, fold):
     test_data = []
     test_label = []
     fold_list = [i for i in range(fold - 1, fold + 3)]
 
     for dir1 in tqdm(os.listdir(img_folder)):
         for eye in os.listdir(os.path.join(img_folder, dir1)):
-            for file in list(os.listdir(os.path.join(img_folder, dir1, eye))[i] for i in fold_list):
+            for file in list(
+                os.listdir(os.path.join(img_folder, dir1, eye))[i] for i in fold_list
+            ):
                 image_path = os.path.join(img_folder, dir1, eye, file)
                 if image_path.endswith(".jpg") == False:
                     continue
                 img = image.load_img(image_path, target_size=(64, 64))
                 img = image.img_to_array(img)
                 test_data.append(img)
-                test_label.append(dir1+'0' if eye == 'L' else dir1+'1')
+                test_label.append(dir1 + "0" if eye == "L" else dir1 + "1")
 
-    np.save(f'temp_data/Fusion_x_fold{fold}.npy', test_data)
-    np.save(f'temp_data/Fusion_y_fold{fold}.npy', test_label)
+    np.save(f"temp_data/Fusion_x_fold{fold}.npy", test_data)
+    np.save(f"temp_data/Fusion_y_fold{fold}.npy", test_label)
     return np.array(test_data), np.array(test_label)
 
 
 def load_dataset(fold):
-    Fusion_X, Fusion_y = combine_LR(np.load(f'temp_data/Fusion_x_fold{fold}.npy'),
-                                    np.load(
-                                        f'temp_data/Fusion_y_fold{fold}.npy'),
-                                    1000, 4)
+    Fusion_X, Fusion_y = combine_LR(
+        np.load(f"temp_data/Fusion_x_fold{fold}.npy"),
+        np.load(f"temp_data/Fusion_y_fold{fold}.npy"),
+        1000,
+        4,
+    )
 
-    model = VGG16(weights='imagenet', include_top=False,
-                  input_shape=(64, 128, 3))
-    with tf.device('GPU:0'):
+    model = VGG16(weights="imagenet", include_top=False, input_shape=(64, 128, 3))
+    with tf.device("GPU:0"):
         features_test = model.predict(Fusion_X)
 
     return features_test, Fusion_X, Fusion_y
@@ -50,8 +54,8 @@ def create_fold_norm(fold):
     iris_norm_R_fold = []
     for fol in range(1000):
         for item in range(4):
-            iris_norm_L_fold.append(iris_norm_L[fol*10+item+fold])
-            iris_norm_R_fold.append(iris_norm_R[fol*10+item+fold])
+            iris_norm_L_fold.append(iris_norm_L[fol * 10 + item + fold])
+            iris_norm_R_fold.append(iris_norm_R[fol * 10 + item + fold])
     return np.array(iris_norm_L_fold), np.array(iris_norm_R_fold)
 
 
@@ -86,8 +90,12 @@ def accuracy_score_multi_thread(ref_num, test_num, same_num=2):
             else:
                 far += 1
         elif iris_score == "Not Sure" or iris_score == "No Iris":
-            peri_score = predict_image(features_test, str(
-                img_1_fol).zfill(3), img_2_item + 4 * img_2_fol, fold_num)
+            peri_score = predict_image(
+                features_test,
+                str(img_1_fol).zfill(3),
+                img_2_item + 4 * img_2_fol,
+                fold_num,
+            )
             if peri_score == "Match":
                 predict.append(1)
                 if img_2_fol == img_1_fol:
@@ -122,7 +130,10 @@ def accuracy_score_multi_thread(ref_num, test_num, same_num=2):
         image_combinations = product(
             range(ref_num), range(0, 1), range(test_num), range(1, same_num)
         )
-        for t, true, f, false, p, g in tqdm(executor.map(process_images, image_combinations), total=ref_num*test_num*(same_num-1)):
+        for t, true, f, false, p, g in tqdm(
+            executor.map(process_images, image_combinations),
+            total=ref_num * test_num * (same_num - 1),
+        ):
             tar += t
             trr += true
             far += f
@@ -138,19 +149,24 @@ def plot_confu(ground_truth, predict, url):
     cm = confusion_matrix(ground_truth, predict)
 
     # plot the confusion matrix
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
-    plt.title('Confusion matrix')
+    plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+    plt.title("Confusion matrix")
     plt.colorbar()
     tick_marks = np.arange(2)
-    plt.xticks(tick_marks, ['0', '1'])
-    plt.yticks(tick_marks, ['0', '1'])
-    plt.xlabel('Predicted label')
-    plt.ylabel('True label')
+    plt.xticks(tick_marks, ["0", "1"])
+    plt.yticks(tick_marks, ["0", "1"])
+    plt.xlabel("Predicted label")
+    plt.ylabel("True label")
 
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            plt.text(j, i, str(cm[i, j]), horizontalalignment="center",
-                     color="white" if cm[i, j] > cm.max() / 2 else "black")
+            plt.text(
+                j,
+                i,
+                str(cm[i, j]),
+                horizontalalignment="center",
+                color="white" if cm[i, j] > cm.max() / 2 else "black",
+            )
 
     plt.savefig(url, dpi=600)
 
@@ -172,12 +188,12 @@ def print_accuracy(ground_truth, confu):
     # print the accuracy and error rates
     accuracy = (true_positive + true_negative) / len(ground_truth)
     error_rate = 1 - accuracy
-    print(f'True Acceptance Rate (TAR): {tar*100}%')
-    print(f'True Rejection Rate (TRR): {trr*100}%')
-    print(f'False Acceptance Rate (FAR): {far*100}%')
-    print(f'False Rejection Rate (FRR): {frr*100}%')
-    print(f'Accuracy: {accuracy*100}%')
-    print(f'Error Rate: {error_rate*100}%')
+    print(f"True Acceptance Rate (TAR): {tar*100}%")
+    print(f"True Rejection Rate (TRR): {trr*100}%")
+    print(f"False Acceptance Rate (FAR): {far*100}%")
+    print(f"False Rejection Rate (FRR): {frr*100}%")
+    print(f"Accuracy: {accuracy*100}%")
+    print(f"Error Rate: {error_rate*100}%")
     # print(f'Recongition Rate: {(1-far-frr)*100}%')
     # print(f'Error: {(far+frr)*100}%')
 
@@ -186,19 +202,20 @@ fold_num = 2
 ref_img_num = 200
 test_img_num = 200
 
-if f'Fusion_x_fold{fold_num}.npy' not in list(os.listdir('temp_data')):
-    X_test, y_test = create_dataset(
-        'Iris-Dataset/CASIA-Iris-Thousand', fold_num)
+if f"Fusion_x_fold{fold_num}.npy" not in list(os.listdir("temp_data")):
+    X_test, y_test = load_VASIA("Iris-Dataset/CASIA-Iris-Thousand", fold_num)
 
 features_test, Fusion_X, Fusion_y = load_dataset(fold_num)
 
-iris_norm_L = np.load('temp_data/iris_norm_L_all.npy')
-iris_norm_R = np.load('temp_data/iris_norm_R_all.npy')
+iris_norm_L = np.load("temp_data/iris_norm_L_all.npy")
+iris_norm_R = np.load("temp_data/iris_norm_R_all.npy")
 
-iris_norm_L_fold, iris_norm_R_fold = create_fold_norm(fold_num-1)
+iris_norm_L_fold, iris_norm_R_fold = create_fold_norm(fold_num - 1)
 
-confu, predict, ground_truth = accuracy_score_multi_thread(
-    ref_img_num, test_img_num, 4)
-plot_confu(ground_truth, predict,
-           f'Confu_matrix_{ref_img_num}_{test_img_num}_4_fold{fold_num}.png')
+confu, predict, ground_truth = accuracy_score_multi_thread(ref_img_num, test_img_num, 4)
+plot_confu(
+    ground_truth,
+    predict,
+    f"Confu_matrix_{ref_img_num}_{test_img_num}_4_fold{fold_num}.png",
+)
 print_accuracy(ground_truth, confu)

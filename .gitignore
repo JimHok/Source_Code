@@ -7,8 +7,11 @@
 /test.ipynb
 /main/Iris-Dataset
 /main/temp_data
-/main/Model
+/main/model
 /reference code
 /graph
+/main/checkpoint
+/main/__pycache__
+/main/dask-worker-space
+/.dvc
 
-# Allow
