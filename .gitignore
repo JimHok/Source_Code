@@ -11,5 +11,7 @@
 /reference code
 /graph
 /main/checkpoint
+/main/__pycache__
+/main/dask-worker-space
+/.dvc
 
-# Allow
