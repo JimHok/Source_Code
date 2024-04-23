@@ -14,4 +14,4 @@
 /main/__pycache__
 /main/dask-worker-space
 /.dvc
-
+/main/test/checkpoints
