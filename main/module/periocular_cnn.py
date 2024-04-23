@@ -16,7 +16,7 @@ from sklearnex import patch_sklearn
 patch_sklearn()
 
 
-def load_VASIA(img_folder, img_num):
+def load_CASIA(img_folder, img_num):
     iris_data = []
     iris_label = [[], [], []]
 

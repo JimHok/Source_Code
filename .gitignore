@@ -15,3 +15,4 @@
 /main/dask-worker-space
 /.dvc
 /main/test/checkpoints
+/main/dvclive

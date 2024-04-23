@@ -20,9 +20,16 @@ def find_pupil_new(img):
     circles = None
     while circles is None and param2 > 20:
         # HoughCircles
-        circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 1,
-                                   param1=param1, param2=param2,
-                                   minRadius=20, maxRadius=80)
+        circles = cv2.HoughCircles(
+            img,
+            cv2.HOUGH_GRADIENT,
+            1,
+            1,
+            param1=param1,
+            param2=param2,
+            minRadius=20,
+            maxRadius=80,
+        )
 
         if circles is not None:
             break
@@ -39,7 +46,7 @@ def lash_removal(img, thresh=40):
     ref = img < thresh
     coords = np.where(ref == 1)
     rmov_img = img.astype(float)
-    rmov_img[coords] = float('nan')
+    rmov_img[coords] = float("nan")
     return rmov_img
 
 
@@ -47,9 +54,9 @@ def lash_removal_daugman(img, thresh=40):
     ref = img < thresh
     coords = np.where(ref == 1)
     rmov_img = img.astype(float)
-    rmov_img[coords] = float('nan')
+    rmov_img[coords] = float("nan")
     temp_img = rmov_img.copy()
-    temp_img[coords] = 255/2
+    temp_img[coords] = 255 / 2
     avg = np.sum(temp_img) / (rmov_img.shape[0] * rmov_img.shape[1])
     rmov_img[coords] = avg
 
@@ -75,9 +82,9 @@ def localization(img, N=400, alpha=1.6, beta=500, gamma=0.05, pupil_loc=None):
     if x is None:
         x, y = 350, 250
 
-    s = np.linspace(0, 2*np.pi, 400)
-    c = x + 150*np.cos(s)
-    r = y + 150*np.sin(s)
+    s = np.linspace(0, 2 * np.pi, 400)
+    c = x + 150 * np.cos(s)
+    r = y + 150 * np.sin(s)
     init = np.array([r, c]).T
 
     snake = active_contour(result, init, alpha=alpha, beta=beta, gamma=gamma)
@@ -107,17 +114,22 @@ def normalization(img, pupil_circle, iris_circle, M=64, N=400, offset=0):
 
         xspace = np.linspace(begin[0], end[i][0], M)
         yspace = np.linspace(begin[1], end[i][1], M)
-        normalized[:, i] = [img[int(y), int(x)]
-                            if 0 <= int(x) < img.shape[1] and 0 <= int(y) < img.shape[0]
-                            else 0
-                            for x, y in zip(xspace, yspace)]
+        normalized[:, i] = [
+            (
+                img[int(y), int(x)]
+                if 0 <= int(x) < img.shape[1] and 0 <= int(y) < img.shape[0]
+                else 0
+            )
+            for x, y in zip(xspace, yspace)
+        ]
     return normalized
 
 
 def masked(img, snake, circles):
     mask1 = np.zeros_like(img)
-    mask1 = cv2.circle(mask1, (int(circles[0]), int(
-        circles[1])), int(circles[2]), (255, 255, 255), -1)
+    mask1 = cv2.circle(
+        mask1, (int(circles[0]), int(circles[1])), int(circles[2]), (255, 255, 255), -1
+    )
     mask2 = np.zeros_like(img)
     mask2[snake[:, 0].astype(int), snake[:, 1].astype(int)] = 255
 
@@ -142,7 +154,7 @@ def gaborconvolve_f(img, minw_length, mult, sigma_f):
     logGabor_f = np.zeros(ndata)
     filterb = np.zeros([rows, ndata], dtype=complex)
 
-    radius = np.arange(ndata/2 + 1) / (ndata/2) / 2
+    radius = np.arange(ndata / 2 + 1) / (ndata / 2) / 2
     radius[0] = 1
 
     # filter wavelength
@@ -150,8 +162,9 @@ def gaborconvolve_f(img, minw_length, mult, sigma_f):
 
     # radial filter component
     fo = 1 / wavelength
-    logGabor_f[0: int(ndata/2) + 1] = np.exp((-(np.log(radius/fo))**2) /
-                                             (2 * np.log(sigma_f)**2))
+    logGabor_f[0 : int(ndata / 2) + 1] = np.exp(
+        (-((np.log(radius / fo)) ** 2)) / (2 * np.log(sigma_f) ** 2)
+    )
     logGabor_f[0] = 0
 
     # convolution for each row
@@ -211,23 +224,22 @@ def iris_match(img_1_L, img_1_R, img_2_L, img_2_R):
         for j in range(len(imgs[i])):
             img = imgs[i][j]
 
-            _, snake, circles = localization(
-                img, N=400)
+            _, snake, circles = localization(img, N=400)
 
             pupil_circle = circles
             iris_circle = np.flip(np.array(snake).astype(int), 1)
 
             if circles[2] is None:
-                return 'No Iris'
+                return "No Iris"
             else:
                 # Image Preprocessing (Normalization)
                 iris_norm = normalization(img, pupil_circle, iris_circle)
 
                 # Feature Extraction
-                romv_img, noise_img = lash_removal_daugman(
-                    iris_norm, thresh=50)
+                romv_img, noise_img = lash_removal_daugman(iris_norm, thresh=50)
                 template, mask_noise = encode_iris(
-                    romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5)
+                    romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5
+                )
 
                 templates[i].append(template)
                 masks[i].append(mask_noise)
@@ -235,16 +247,22 @@ def iris_match(img_1_L, img_1_R, img_2_L, img_2_R):
                 # Matching
                 if len(templates[1]) > 0:
                     hd_raw = HammingDistance(
-                        templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                        templates[i - 1][j],
+                        masks[i - 1][j],
+                        templates[i][j],
+                        masks[i][j],
+                    )
                     results.append(hd_raw)
 
     if len(results) == 2:
         if results[0] <= 0.47 and results[1] <= 0.47:
-            return 'Match'
-        elif (results[0] <= 0.5 and results[1] <= 0.48) or (results[1] <= 0.5 and results[0] <= 0.48):
-            return 'Not Sure'
+            return "Match"
+        elif (results[0] <= 0.5 and results[1] <= 0.48) or (
+            results[1] <= 0.5 and results[0] <= 0.48
+        ):
+            return "Not Sure"
         else:
-            return 'Not Match'
+            return "Not Match"
 
 
 def iris_match_preload(img_1_L, img_1_R, img_2_L, img_2_R, formula=False):
@@ -260,16 +278,16 @@ def iris_match_preload(img_1_L, img_1_R, img_2_L, img_2_R, formula=False):
             if np.all(img == 0, axis=(0, 1)):
                 if formula:
                     return [[0.471, 0.651, 0.642], [0.471, 0.651, 0.642]]
-                return 'No Iris'
+                return "No Iris"
 
             # Image Preprocessing (Normalization)
             iris_norm = img
 
             # Feature Extraction
-            romv_img, noise_img = lash_removal_daugman(
-                iris_norm, thresh=50)
+            romv_img, noise_img = lash_removal_daugman(iris_norm, thresh=50)
             template, mask_noise = encode_iris(
-                romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5)
+                romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5
+            )
 
             templates[i].append(template)
             masks[i].append(mask_noise)
@@ -277,24 +295,42 @@ def iris_match_preload(img_1_L, img_1_R, img_2_L, img_2_R, formula=False):
             # Matching
             if len(templates[1]) > 0:
                 hd = HammingDistance(
-                    templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                    templates[i - 1][j], masks[i - 1][j], templates[i][j], masks[i][j]
+                )
                 jd = JaccardDistance(
-                    templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                    templates[i - 1][j], masks[i - 1][j], templates[i][j], masks[i][j]
+                )
                 tdi = TanimotoDistance(
-                    templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                    templates[i - 1][j], masks[i - 1][j], templates[i][j], masks[i][j]
+                )
 
                 results.append([hd, jd, tdi])
 
     if not formula:
         if len(results) == 2:
-            if (results[0][0] <= 0.45 and results[1][0] <= 0.45) or (results[0][1] <= 0.62 and results[1][1] <= 0.62) or (results[0][2] <= 0.61 and results[1][2] <= 0.61):
-                return 'Match'
-            elif results[0][0] <= 0.4 or results[1][0] <= 0.4 or results[0][1] <= 0.57 or results[1][1] <= 0.57 or results[0][2] <= 0.55 or results[1][2] <= 0.55:
-                return 'Match'
-            elif (results[0][0] >= 0.49 and results[1][0] >= 0.49) and (results[0][1] >= 0.67 and results[1][1] >= 0.67) and (results[0][2] >= 0.66 and results[1][2] >= 0.66):
-                return 'Not Match'
+            if (
+                (results[0][0] <= 0.45 and results[1][0] <= 0.45)
+                or (results[0][1] <= 0.62 and results[1][1] <= 0.62)
+                or (results[0][2] <= 0.61 and results[1][2] <= 0.61)
+            ):
+                return "Match"
+            elif (
+                results[0][0] <= 0.4
+                or results[1][0] <= 0.4
+                or results[0][1] <= 0.57
+                or results[1][1] <= 0.57
+                or results[0][2] <= 0.55
+                or results[1][2] <= 0.55
+            ):
+                return "Match"
+            elif (
+                (results[0][0] >= 0.49 and results[1][0] >= 0.49)
+                and (results[0][1] >= 0.67 and results[1][1] >= 0.67)
+                and (results[0][2] >= 0.66 and results[1][2] >= 0.66)
+            ):
+                return "Not Match"
             else:
-                return 'Not Sure'
+                return "Not Sure"
 
     return np.array(results)
 
@@ -310,16 +346,16 @@ def iris_match_only(img_1_L, img_1_R, img_2_L, img_2_R, thresh=0.47):
             img = imgs[i][j]
 
             if np.all(img == 0, axis=(0, 1)):
-                return 'Not Match'
+                return "Not Match"
             else:
                 # Image Preprocessing (Normalization)
                 iris_norm = img
 
                 # Feature Extraction
-                romv_img, noise_img = lash_removal_daugman(
-                    iris_norm, thresh=50)
+                romv_img, noise_img = lash_removal_daugman(iris_norm, thresh=50)
                 template, mask_noise = encode_iris(
-                    romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5)
+                    romv_img, noise_img, minw_length=18, mult=1, sigma_f=0.5
+                )
 
                 templates[i].append(template)
                 masks[i].append(mask_noise)
@@ -327,11 +363,19 @@ def iris_match_only(img_1_L, img_1_R, img_2_L, img_2_R, thresh=0.47):
                 # Matching
                 if len(templates[1]) > 0:
                     hd_raw = HammingDistance(
-                        templates[i-1][j], masks[i-1][j], templates[i][j], masks[i][j])
+                        templates[i - 1][j],
+                        masks[i - 1][j],
+                        templates[i][j],
+                        masks[i][j],
+                    )
                     results.append(hd_raw)
 
     if len(results) == 2:
-        if (results[0] <= thresh and results[1] <= thresh) or (results[0] <= 0.5 and results[1] <= thresh) or (results[1] <= 0.5 and results[0] <= thresh):
-            return 'Match'
+        if (
+            (results[0] <= thresh and results[1] <= thresh)
+            or (results[0] <= 0.5 and results[1] <= thresh)
+            or (results[1] <= 0.5 and results[0] <= thresh)
+        ):
+            return "Match"
         else:
-            return 'Not Match'
+            return "Not Match"

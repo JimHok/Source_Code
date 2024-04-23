@@ -92,34 +92,36 @@ def get_fusion_scores_mp(
             pool.apply_async(
                 iris_score_fusion_preload,
                 args=(
-                    iris_norm_L[
-                        (int(labels[pair][0][:-2]) - start_label) * total_test_img
-                        + int(labels[pair][0][-2:])
-                    ],
-                    iris_norm_R[
-                        (int(labels[pair][0][:-2]) - start_label) * total_test_img
-                        + int(labels[pair][0][-2:])
-                    ],
-                    iris_norm_L[
-                        (int(labels[pair][1][:-2]) - start_label) * total_test_img
-                        + int(labels[pair][1][-2:])
-                    ],
-                    iris_norm_R[
-                        (int(labels[pair][1][:-2]) - start_label) * total_test_img
-                        + int(labels[pair][1][-2:])
-                    ],
-                )
-                if (int(labels[pair][0][:-2]) - start_label) * total_test_img
-                + int(labels[pair][0][-2:])
-                < len(iris_norm_L)
-                and (int(labels[pair][1][:-2]) - start_label) * total_test_img
-                + int(labels[pair][1][-2:])
-                < len(iris_norm_L)
-                else (
-                    np.zeros((64, 400)),
-                    np.zeros((64, 400)),
-                    np.zeros((64, 400)),
-                    np.zeros((64, 400)),
+                    (
+                        iris_norm_L[
+                            (int(labels[pair][0][:-2]) - start_label) * total_test_img
+                            + int(labels[pair][0][-2:])
+                        ],
+                        iris_norm_R[
+                            (int(labels[pair][0][:-2]) - start_label) * total_test_img
+                            + int(labels[pair][0][-2:])
+                        ],
+                        iris_norm_L[
+                            (int(labels[pair][1][:-2]) - start_label) * total_test_img
+                            + int(labels[pair][1][-2:])
+                        ],
+                        iris_norm_R[
+                            (int(labels[pair][1][:-2]) - start_label) * total_test_img
+                            + int(labels[pair][1][-2:])
+                        ],
+                    )
+                    if (int(labels[pair][0][:-2]) - start_label) * total_test_img
+                    + int(labels[pair][0][-2:])
+                    < len(iris_norm_L)
+                    and (int(labels[pair][1][:-2]) - start_label) * total_test_img
+                    + int(labels[pair][1][-2:])
+                    < len(iris_norm_L)
+                    else (
+                        np.zeros((16, 400)),
+                        np.zeros((16, 400)),
+                        np.zeros((16, 400)),
+                        np.zeros((16, 400)),
+                    )
                 ),
             )
             for pair in range(start_index, len(labels))
