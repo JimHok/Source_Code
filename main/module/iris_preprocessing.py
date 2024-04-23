@@ -478,27 +478,15 @@ def process_img_final(args):
         dir1[:-1],
         "iris_norm_L" if dir1[-1] == "0" else "iris_norm_R",
         (int(dir1[:-1]) - beg_dir1s) * num_files_per_dir + int(files) - beg_files,
-        np.zeros((64, 400))
-        if circles[2] is None
-        else normalization(img, pupil_circle, iris_circle),
+        (
+            np.zeros((64, 400))
+            if circles[2] is None
+            else normalization(img, pupil_circle, iris_circle)
+        ),
     )
 
 
 def save_iris_norm(path, iris_norm_new):
-    # iris_norm_L_new = np.array(
-    #     list(
-    #         iris_norm_new[~iris_norm_new["files_name"].apply(lambda x: len(x) == 0)][
-    #             "iris_norm_L"
-    #         ]
-    #     )
-    # )
-    # iris_norm_R_new = np.array(
-    #     list(
-    #         iris_norm_new[~iris_norm_new["files_name"].apply(lambda x: len(x) == 0)][
-    #             "iris_norm_R"
-    #         ]
-    #     )
-    # )
 
     iris_norm_new["iris_norm_L"] = iris_norm_new["iris_norm_L"].apply(
         lambda x: np.zeros((64, 400)) if len(x) == 0 else x
