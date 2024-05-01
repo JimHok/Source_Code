@@ -16,3 +16,4 @@
 /.dvc
 /main/test/checkpoints
 /main/dvclive
+/main/module/segment_anything/checkpoints

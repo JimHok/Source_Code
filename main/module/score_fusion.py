@@ -132,7 +132,7 @@ def plot_cm(y_test_final, y_predict, fig=None, ax=None):
     # display the number of samples in each cell
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            if cm[i, j] > cm.max() / 2:
+            if cm[i, j] > len(y_predict) / 4:
                 ax.text(j, i, str(cm[i, j]), ha="center", va="center", color="white")
             else:
                 ax.text(j, i, str(cm[i, j]), ha="center", va="center", color="black")
@@ -409,21 +409,32 @@ def accuracy_score_preload(labels, model, iris_scores, X_test):
             ground_truth.append(0)
 
         iris_score = iris_scores[pair]
-        # if (iris_score[0][0] <= 0.45 and iris_score[0][1] <= 0.45) or (iris_score[1][0] <= 0.62 and iris_score[1][1] <= 0.62) or (iris_score[3][0] <= 0.61 and iris_score[3][1] <= 0.61):
-        #     iris_result = 'Match'
 
         # Iris Match
+        # if (
+        #     (iris_score[0][0] <= 0.4 and iris_score[0][1] <= 0.4)
+        #     and (iris_score[1][0] <= 0.6 and iris_score[1][1] <= 0.6)
+        #     and (iris_score[3][0] <= 0.6 and iris_score[3][1] <= 0.6)
+        # ):
+        #     predict.append(1)
+        # # Iris Not Match
+        # elif (
+        #     (iris_score[0][0] >= 0.5 and iris_score[0][1] >= 0.5)
+        #     and (iris_score[1][0] >= 0.7 and iris_score[1][1] >= 0.7)
+        #     and (iris_score[3][0] >= 0.7 and iris_score[3][1] >= 0.7)
+        # ):
+        #     predict.append(0)
         if (
-            (iris_score[0][0] <= 0.4 and iris_score[0][1] <= 0.4)
-            or (iris_score[1][0] <= 0.54 and iris_score[1][1] <= 0.54)
-            or (iris_score[3][0] <= 0.53 and iris_score[3][1] <= 0.53)
+            (iris_score[0][0] <= 0.45 and iris_score[0][1] <= 0.45)
+            and (iris_score[1][0] <= 0.63 and iris_score[1][1] <= 0.63)
+            and (iris_score[3][0] <= 0.63 and iris_score[3][1] <= 0.63)
         ):
             predict.append(1)
         # Iris Not Match
         elif (
-            (iris_score[0][0] >= 0.5 and iris_score[0][1] >= 0.5)
-            or (iris_score[1][0] >= 0.68 and iris_score[1][1] >= 0.68)
-            or (iris_score[3][0] >= 0.67 and iris_score[3][1] >= 0.67)
+            (iris_score[0][0] >= 0.49 and iris_score[0][1] >= 0.49)
+            and (iris_score[1][0] >= 0.67 and iris_score[1][1] >= 0.67)
+            and (iris_score[3][0] >= 0.67 and iris_score[3][1] >= 0.67)
         ):
             predict.append(0)
         # Iris Not Sure
@@ -433,5 +444,65 @@ def accuracy_score_preload(labels, model, iris_scores, X_test):
                 predict.append(1)
             else:
                 predict.append(0)
+
+    return predict, ground_truth
+
+
+def accuracy_score_iris_preload(labels, iris_scores):
+    predict = []
+    ground_truth = []
+
+    for pair in tqdm(range(len(labels))):
+        img_1_fol = int(labels[pair][0][:-2])
+        img_2_fol = int(labels[pair][1][:-2])
+
+        if img_1_fol == img_2_fol:
+            ground_truth.append(1)
+        else:
+            ground_truth.append(0)
+
+        iris_score = iris_scores[pair]
+
+        # Iris Match
+        # if (
+        #     (iris_score[0][0] <= 0.46 or iris_score[0][1] <= 0.46)  # 0.45
+        #     and (iris_score[1][0] <= 0.64 or iris_score[1][1] <= 0.64)  # 0.64
+        #     and (iris_score[3][0] <= 0.64 or iris_score[3][1] <= 0.64)  # 0.64
+        # ):
+        #     predict.append(1)
+        if (
+            (iris_score[0][0] <= 0.47 or iris_score[0][1] <= 0.47)  # 0.45
+            and (iris_score[1][0] <= 0.66 or iris_score[1][1] <= 0.66)  # 0.64
+            and (iris_score[3][0] <= 0.66 or iris_score[3][1] <= 0.66)  # 0.64
+        ):
+            predict.append(1)
+        # Iris Not Match
+        else:
+            predict.append(0)
+
+    return predict, ground_truth
+
+
+def accuracy_score_irisNoF_preload(labels, iris_scores):
+    predict = []
+    ground_truth = []
+
+    for pair in tqdm(range(len(labels))):
+        img_1_fol = int(labels[pair][0][:-2])
+        img_2_fol = int(labels[pair][1][:-2])
+
+        if img_1_fol == img_2_fol:
+            ground_truth.append(1)
+        else:
+            ground_truth.append(0)
+
+        iris_score = iris_scores[pair]
+
+        # Iris Match
+        if iris_score[0][0] <= 0.47 or iris_score[0][1] <= 0.47:  # 0.45
+            predict.append(1)
+        # Iris Not Match
+        else:
+            predict.append(0)
 
     return predict, ground_truth

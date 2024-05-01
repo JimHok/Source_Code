@@ -12,6 +12,7 @@ from itertools import product
 import pandas as pd
 import traceback
 from skimage import measure
+from tensorflow.keras.preprocessing import image
 
 from module.Iris_recognition import *
 from module.Periocular_recognition import *
@@ -19,6 +20,111 @@ from module.img_enhance.half_UGV import *
 from module.img_enhance.reflection_removal import *
 from module.densenet_seg.test import *
 from module.densenet_seg.iris_seg import *
+
+
+def load_CASIA(img_folder, img_num):
+    iris_data = []
+    iris_label = [[], [], []]
+
+    for dir1 in tqdm(os.listdir(img_folder)):
+        left_eye_files = os.listdir(os.path.join(img_folder, dir1, "L"))
+        right_eye_files = os.listdir(os.path.join(img_folder, dir1, "R"))
+        if len(left_eye_files) < img_num or len(right_eye_files) < img_num:
+            continue
+        for eye in os.listdir(os.path.join(img_folder, dir1)):
+            for file in list(
+                os.listdir(os.path.join(img_folder, dir1, eye))[i]
+                for i in range(img_num)
+            ):
+                image_path = os.path.join(img_folder, dir1, eye, file)
+                if image_path.endswith(".jpg") == False:
+                    continue
+                img = image.load_img(image_path, target_size=(64, 64))
+                img = image.img_to_array(img)
+                iris_data.append(img)
+                iris_label[0].append(dir1 + "0" if eye == "L" else dir1 + "1")
+                iris_label[1].append(file[6:8])
+                iris_label[2].append(image_path)
+
+    return np.array(iris_data), np.array(iris_label)
+
+
+def load_UBIPr(img_folder, img_num):
+    files_list = []
+    for files in os.listdir(img_folder):
+        if files.endswith(".jpg") and "S1" in files:
+            files = files.replace(".jpg", "")
+            files = files.split("_")
+            files[0] = int(files[0].replace("C", ""))
+            files[1] = int(files[1].replace("S", ""))
+            files[2] = int(files[2].replace("I", ""))
+            files_list.append(files)
+    files_list = sorted(files_list)
+    files_db = pd.DataFrame(files_list, columns=["C", "S", "I"])
+    counts = files_db["C"].value_counts()
+    index = counts[counts != img_num].index
+    new_index = []
+    for i in index:
+        new_index.append(i)
+        if i % 2 == 0:
+            new_index.append(i - 1)
+        else:
+            new_index.append(i + 1)
+    files_db = files_db.loc[~files_db["C"].isin(list(set(new_index)))]
+
+    iris_data = []
+    iris_label = [[], [], []]
+    for C, S, I in tqdm(files_db.values):
+        image_path = f"{img_folder}/C{C}_S{S}_I{I}.jpg"
+        img = image.load_img(image_path, target_size=(64, 64))
+        img = image.img_to_array(img)
+        iris_data.append(img)
+        iris_label[0].append(
+            str(C // 2).zfill(3) + "0"
+            if C % 2 != 0
+            else str((C - 1) // 2).zfill(3) + "1"
+        )
+        iris_label[1].append(f"{I}".zfill(2))
+        iris_label[2].append(image_path)
+
+    return np.array(iris_data), np.array(iris_label)
+
+
+def load_UBIPr_peri(img_folder, img_num):
+    files_list = []
+    for files in os.listdir(img_folder):
+        if files.endswith(".jpg") and "S1" in files:
+            files = files.replace(".jpg", "")
+            files = files.split("_")
+            files[0] = int(files[0].replace("C", ""))
+            files[1] = int(files[1].replace("S", ""))
+            files[2] = int(files[2].replace("I", ""))
+            files_list.append(files)
+    files_list = sorted(files_list)
+    files_db = pd.DataFrame(files_list, columns=["C", "S", "I"])
+    counts = files_db["C"].value_counts()
+    index = counts[counts != img_num].index
+    new_index = []
+    for i in index:
+        new_index.append(i)
+        if i % 2 == 0:
+            new_index.append(i - 1)
+        else:
+            new_index.append(i + 1)
+    files_db = files_db.loc[~files_db["C"].isin(list(set(new_index)))]
+
+    iris_data = []
+    iris_label = [[], [], []]
+    for C, S, I in tqdm(files_db.values):
+        image_path = f"{img_folder}/C{C}_S{S}_I{I}.jpg"
+        img = image.load_img(image_path, target_size=(64, 128))
+        img = image.img_to_array(img)
+        iris_data.append(img)
+        iris_label[0].append(str((C + 1) // 2).zfill(3))
+        iris_label[1].append(f"{I}".zfill(2))
+        iris_label[2].append(image_path)
+
+    return np.array(iris_data), np.array(iris_label[0]), np.array(iris_label[1])
 
 
 def create_iris_norm(img_folder):
